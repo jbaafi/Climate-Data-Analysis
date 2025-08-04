@@ -1,0 +1,236 @@
+---
+title: "Photoperiod Data"
+author: "jbaafi"
+date: "2024-07-25"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Photoperiod data analysis
+
+### Calculate the photoperiod programmatically
+
+We calculate the photoperiod programmatically using the `suncalc` package in R. This chunk is used to calculate photoperiod for 2023.
+
+```{r}
+# Install and load necessary packages
+# install.packages("suncalc")
+# install.packages("ggplot2")
+library(suncalc)
+library(ggplot2)
+
+# Define the location (latitude and longitude) and date range
+latitude <- 47.62
+longitude <- -52.75
+dates <- seq.Date(from = as.Date("2023-01-01"), to = as.Date("2023-12-31"), by = "day")
+
+# Calculate sunrise and sunset times
+sun_times <- getSunlightTimes(date = dates, lat = latitude, lon = longitude, keep = c("sunrise", "sunset"))
+
+# Calculate photoperiod (day length) in hours
+sun_times$photoperiod <- as.numeric(difftime(sun_times$sunset, sun_times$sunrise, units = "hours"))
+
+head(sun_times)
+
+# Plot the photoperiod against dates using ggplot2
+ggplot(sun_times, aes(x = date, y = photoperiod)) +
+  geom_line(color = "blue") +
+  labs(title = "Photoperiod throughout the Year",
+       x = "Date",
+       y = "Photoperiod (hours)") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 24, face = "bold"),
+    axis.title = element_text(size = 20),
+    axis.text = element_text(size = 16)
+  )
+
+```
+
+This chunk converts the time from hours to the format, hours:minutes:seconds. I used this chunk to allow me to compare the photoperiod (daylenght) to the data I found online on the `timeanddate` website which can be found https://www.timeanddate.com/sun/canada/st-johns?month=5&year=2023.
+
+```{r}
+# Define the time in decimal hours
+time_in_hours <- 15.6811
+
+# Extract the integer part for hours
+hours <- floor(time_in_hours)
+
+# Calculate the remaining minutes and seconds
+minutes <- floor((time_in_hours - hours) * 60)
+seconds <- round(((time_in_hours - hours) * 60 - minutes) * 60)
+
+# Format the time as a string in "hours:minutes:seconds"
+formatted_time <- sprintf("%02d:%02d:%02d", hours, minutes, seconds)
+
+# Print the formatted time
+formatted_time
+
+```
+
+
+Now I want to calculate photoperiod for the year range 2008 - 2023
+
+```{r}
+library(suncalc)
+library(ggplot2)
+
+# Define the location (latitude and longitude) and date range
+latitude <- 47.62
+longitude <- -52.75
+dates <- seq.Date(from = as.Date("2008-01-01"), to = as.Date("2023-12-31"), by = "day")
+
+# Calculate sunrise and sunset times
+sun_times_large <- getSunlightTimes(date = dates, lat = latitude, lon = longitude, keep = c("sunrise", "sunset"))
+
+# Calculate photoperiod (day length) in hours
+sun_times_large$photoperiod <- as.numeric(difftime(sun_times_large$sunset, sun_times_large$sunrise, units = "hours"))
+
+head(sun_times_large)
+
+```
+
+Plot the data from 2010 - 2023 
+
+```{r}
+library(dplyr)
+# Extract the year and day of year from the date
+sun_times_large <- sun_times_large %>%
+  mutate(year = as.factor(format(date, "%Y")),
+         day_of_year = as.integer(format(date, "%j")))
+
+# Plot the photoperiod against day of year using ggplot2
+ggplot(sun_times_large, aes(x = day_of_year, y = photoperiod)) +
+  geom_line(color = "blue") +
+  labs(title = "Photoperiod throughout the Years",
+       x = "Day of Year",
+       y = "Photoperiod (hours)") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 14, face = "bold"),
+    axis.title = element_text(size = 12),
+    axis.text = element_text(size = 10),
+    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)
+  ) +
+  facet_wrap(~ year, scales = "free_x", ncol = 4) +
+  scale_x_continuous(breaks = seq(0, 365, by = 60), 
+                     labels = function(x) format(as.Date(x, origin = "2020-01-01"), "%b"))
+```
+
+Calculate the photoperiod and plot it on a much larger plotting space
+
+```{r, fig.height=10, fig.width=15, warning=FALSE, message=FALSE}
+
+library(suncalc)
+library(ggplot2)
+library(dplyr)
+
+# Define the location (latitude and longitude) and date range
+latitude <- 47.62
+longitude <- -52.75
+dates <- seq.Date(from = as.Date("2008-01-01"), to = as.Date("2023-12-31"), by = "day")
+
+# Calculate sunrise and sunset times
+sun_times_large <- getSunlightTimes(date = dates, lat = latitude, lon = longitude, keep = c("sunrise", "sunset"))
+
+# Calculate photoperiod (day length) in hours
+sun_times_large$photoperiod <- as.numeric(difftime(sun_times_large$sunset, sun_times_large$sunrise, units = "hours"))
+
+# Extract the year and day of year from the date
+sun_times_large <- sun_times_large %>%
+  mutate(year = as.factor(format(date, "%Y")),
+         day_of_year = as.integer(format(date, "%j")))
+
+# Plot the photoperiod against day of year using ggplot2
+ggplot(sun_times_large, aes(x = day_of_year, y = photoperiod)) +
+  geom_line(color = "blue") +
+  labs(title = "Photoperiod throughout the Years",
+       x = "Day of Year",
+       y = "Photoperiod (hours)") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 24, face = "bold"),
+    axis.title = element_text(size = 20),
+    axis.text = element_text(size = 16),
+    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1),
+    strip.text = element_text(size = 16),   # Adjust facet label size
+    plot.margin = margin(1, 1, 1, 1, "cm")  # Adjust plot margins
+  ) +
+  facet_wrap(~ year, scales = "free_x", ncol = 4) +
+  scale_x_continuous(breaks = seq(0, 365, by = 60), 
+                     labels = function(x) format(as.Date(x, origin = "2020-01-01"), "%b"))
+
+```
+
+
+Calculate the average photoperiod for each day of the year across all years and plot it
+
+```{r}
+library(suncalc)
+library(ggplot2)
+library(dplyr)
+
+# Define the location (latitude and longitude) and date range
+latitude <- 47.62
+longitude <- -52.75
+dates <- seq.Date(from = as.Date("2010-01-01"), to = as.Date("2023-12-31"), by = "day")
+
+# Calculate sunrise and sunset times
+sun_times_large <- getSunlightTimes(date = dates, lat = latitude, lon = longitude, keep = c("sunrise", "sunset"))
+
+# Calculate photoperiod (day length) in hours
+sun_times_large$photoperiod <- as.numeric(difftime(sun_times_large$sunset, sun_times_large$sunrise, units = "hours"))
+
+# Extract the day of year from the date
+sun_times_large <- sun_times_large %>%
+  mutate(day_of_year = as.integer(format(date, "%j")))
+
+# Calculate the average photoperiod for each day of the year across all years
+average_photoperiod <- sun_times_large %>%
+  group_by(day_of_year) %>%
+  summarize(avg_photoperiod = mean(photoperiod, na.rm = TRUE))
+
+# Convert day_of_year to a date format for better x-axis labeling
+average_photoperiod <- average_photoperiod %>%
+  mutate(date = as.Date(day_of_year, origin = "2020-01-01"))
+
+# Plot the average photoperiod against day of year using ggplot2
+ggplot(average_photoperiod, aes(x = date, y = avg_photoperiod)) +
+  geom_line(color = "blue") +
+  labs(title = "Average Photoperiod Across All Years",
+       x = "Date",
+       y = "Average Photoperiod (hours)") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 14, face = "bold"),
+    axis.title = element_text(size = 12),
+    axis.text = element_text(size = 10),
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  scale_x_date(date_labels = "%b", date_breaks = "1 month") # Use scale_x_date for proper date formatting
+
+```
+
+Plot with days on x-axis instead of months
+```{r}
+# Plot the average photoperiod against day of year using ggplot2
+ggplot(average_photoperiod, aes(x = day_of_year, y = avg_photoperiod)) +
+  geom_line(color = "blue") +
+  labs(title = "Average Photoperiod Across All Years",
+       x = "Day of Year",
+       y = "Average Photoperiod (hours)") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 14, face = "bold"),
+    axis.title = element_text(size = 12),
+    axis.text = element_text(size = 10),
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  scale_x_continuous(breaks = seq(1, 365, by = 30), 
+                     labels = function(x) sprintf("%02d", x)) # Format day_of_year as two digits
+
+```
+

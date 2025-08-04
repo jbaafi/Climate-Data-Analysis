@@ -1,0 +1,1634 @@
+---
+title: "NL Weather Data Analysis"
+author: "jbaafi"
+date: "2024-07-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## NL temperature data
+
+This is one set of data that I obtained from a website sited in the overleaf document
+
+```{r, echo=FALSE}
+# 
+data1 <- read.csv("weather data/combined data/climate-daily (5).csv")
+data2 <- read.csv("weather data/combined data/climate-daily (6).csv")
+data3 <- read.csv("weather data/combined data/climate-daily.csv")
+
+```
+
+
+This is also another set of data that I obtained. I am basically comparing this with the one above which is same data but from different sources to decide on the one that is more accurate and use for the model.
+```{r, fig.height=10, fig.width=15, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(dplyr)
+
+data_2008 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403506_2008_P1D.csv")
+data_2009 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403506_2009_P1D.csv")
+data_2010 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403506_2010_P1D.csv")
+data_2011 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403506_2011_P1D.csv")
+data_2012 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403506_2012_P1D.csv")
+data_2013 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2013_P1D.csv")
+data_2014 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2014_P1D.csv")
+data_2015 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2015_P1D.csv")
+data_2016 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2016_P1D.csv")
+data_2017 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2017_P1D.csv")
+data_2018 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2018_P1D.csv")
+data_2019 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2019_P1D.csv")
+data_2020 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2020_P1D.csv")
+data_2021 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2021_P1D.csv")
+data_2022 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2022_P1D.csv")
+data_2023 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2023_P1D.csv")
+
+# Combine the data frames
+combined_data <- rbind(data_2008, data_2009, data_2010, data_2011, data_2012, data_2013, data_2014, data_2015, 
+                       data_2016, data_2017, data_2018, data_2019, data_2020, data_2021, data_2022, data_2023)
+
+# Ensure the date column is in Date format
+combined_data$date <- as.Date(combined_data$Date.Time, format = "%Y-%m-%d")
+
+# Extract the year from the date
+combined_data <- combined_data %>%
+  mutate(year = format(date, "%Y"))
+
+combined_data <- combined_data %>% 
+  mutate(mean_temperature = Mean.Temp...C.)
+
+# Plot the mean temperature for each year as a facet
+ggplot(combined_data, aes(x = date, y = mean_temperature)) +
+  geom_line(color = "blue") +
+  labs(title = "Mean Temperature by Year",
+       x = "Date",
+       y = "Mean Temperature (°C)") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 26, face = "bold"),
+    axis.title = element_text(size = 18),
+    axis.text = element_text(size = 16),
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
+    strip.text = element_text(size = 16) # Adjust facet label size
+  ) +
+  facet_wrap(~ year, scales = "free_x", ncol = 4) + # Facet by 
+  scale_x_continuous(breaks = seq(0, 365, by = 60), 
+                     labels = function(x) format(as.Date(x, origin = "2020-01-01"), "%b"))
+
+```
+
+
+Plotting the same data with x-axis formatted to show the dates
+
+```{r, fig.height=14, fig.width=18, warning=FALSE, message=FALSE}
+ggplot(combined_data, aes(x = date, y = mean_temperature)) +
+  geom_line(color = "blue") +
+  labs(title = "Mean Temperature by Year",
+       x = "Date",
+       y = "Mean Temperature (°C)") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 26, face = "bold"),
+    axis.title = element_text(size = 18),
+    axis.text = element_text(size = 16),
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
+    strip.text = element_text(size = 16) # Adjust facet label size
+  ) +
+  facet_wrap(~ year, scales = "free_x", ncol = 4) +
+  scale_x_date(date_breaks = "3 months", # Set the interval for x-axis ticks
+               date_labels = "%b %Y") # Format date labels
+
+```
+
+
+Plot all dataset on the same plot
+```{r, fig.height=7, fig.width=11, warning=FALSE, message=FALSE}
+p <- ggplot(combined_data, aes(x = date, y = mean_temperature)) +
+  geom_line(color = "blue") +
+  labs(title = "Mean Daily Temperature by Year",
+       x = "Date",
+       y = "Mean Daily Temperature (°C)") +
+  theme_bw() +
+  theme(
+    plot.title = element_text(size = 24, face = "bold"),
+    axis.title = element_text(size = 20),
+    axis.text = element_text(size = 18),
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  scale_x_date(
+    breaks = as.Date(paste0(seq(2008, 2022, by = 2), "-01-01")),
+    labels = as.character(seq(2008, 2022, by = 2))
+  )
+
+p
+
+# Save the plot
+#ggsave("mean_temperature_by_year.png", plot = p, width = 12, height = 8, dpi = 300)
+```
+
+## Compute Daily Average Temperature and Fit a Periodic Function
+
+```{r}
+# Load libraries
+library(dplyr)
+
+# Read the data
+data_2008 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403506_2008_P1D.csv")
+data_2009 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403506_2009_P1D.csv")
+data_2010 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403506_2010_P1D.csv")
+data_2011 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403506_2011_P1D.csv")
+#data_2012 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403506_2012_P1D.csv")
+data_2013 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2013_P1D.csv")
+data_2014 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2014_P1D.csv")
+data_2015 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2015_P1D.csv")
+data_2016 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2016_P1D.csv")
+data_2017 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2017_P1D.csv")
+data_2018 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2018_P1D.csv")
+data_2019 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2019_P1D.csv")
+data_2020 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2020_P1D.csv")
+data_2021 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2021_P1D.csv")
+data_2022 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2022_P1D.csv")
+data_2023 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2023_P1D.csv")
+
+# Combine the data frames
+combined_data <- rbind(data_2008, data_2009, data_2010, data_2011, data_2013, data_2014, data_2015, 
+                       data_2016, data_2017, data_2018, data_2019, data_2020, data_2021, data_2022, data_2023)
+
+# Ensure the date column is in Date format
+combined_data$date <- as.Date(combined_data$Date.Time, format = "%Y-%m-%d")
+
+# Extract the mean temperature column
+combined_data <- combined_data %>%
+  mutate(mean_temperature = Mean.Temp...C.,
+         total_rainfall = Total.Rain..mm.)
+  
+# Create a day of year variable
+combined_data <- combined_data %>%
+  mutate(day_of_year = as.numeric(format(date, "%j")))
+
+# Compute the daily average temperature across the 15 years
+daily_avg_temp <- combined_data %>%
+  group_by(day_of_year) %>%
+  summarize(mean_temperature = mean(mean_temperature, na.rm = TRUE))
+
+# View the daily average temperature data
+head(daily_avg_temp)
+     
+```
+
+
+
+Fitting functions to the daily_avg_temp data and compare their fits
+ 
+```{r}
+# Load libraries
+library(dplyr)
+library(ggplot2)
+
+# Define the first sinusoidal function
+temp.func <- function(t, a, b1, b2) {
+  a + b1 * sin(2 * pi * t / 365) + b2 * cos(2 * pi * t / 365)
+}
+
+# Define the second sinusoidal function
+temp.func2 <- function(t, T_0, T_1, omega, theta) {
+  T_0 * (1 + T_1 * cos(2 * pi * (omega * t + theta) / 365))
+}
+
+# Fit the first model using nls
+fit1 <- nls(mean_temperature ~ temp.func(day_of_year, a, b1, b2),
+            data = daily_avg_temp,
+            start = list(a = mean(daily_avg_temp$mean_temperature),
+                         b1 = sd(daily_avg_temp$mean_temperature) * 0.5,
+                         b2 = sd(daily_avg_temp$mean_temperature) * 0.5))
+
+# Fit the second model using nls
+fit2 <- nls(mean_temperature ~ temp.func2(day_of_year, T_0, T_1, omega, theta),
+            data = daily_avg_temp,
+            start = list(T_0 = mean(daily_avg_temp$mean_temperature),
+                         T_1 = 1,
+                         omega = 1,
+                         theta = 1))
+
+# Summary of the fits
+summary(fit1)
+summary(fit2)
+
+# Extract coefficients
+coeffs1 <- coef(fit1)
+coeffs2 <- coef(fit2)
+
+# Generate fitted values
+daily_avg_temp <- daily_avg_temp %>%
+  mutate(fitted_values1 = temp.func(day_of_year, coeffs1["a"], coeffs1["b1"], coeffs1["b2"]),
+         fitted_values2 = temp.func2(day_of_year, coeffs2["T_0"], coeffs2["T_1"], coeffs2["omega"], coeffs2["theta"]))
+
+# Plot the data and the fitted functions
+ggplot(daily_avg_temp, aes(x = day_of_year)) +
+  geom_line(aes(y = mean_temperature), color = "blue", size = 1) +
+  geom_line(aes(y = fitted_values1), color = "red", linetype = "dashed", size = 1) +
+  geom_line(aes(y = fitted_values2), color = "green", linetype = "dotted", size = 1) +
+  labs(title = "Daily Average Temperature with Fitted Sinusoidal Functions",
+       x = "Day of Year",
+       y = "Mean Temperature (°C)",
+       caption = "Blue: Actual, Red: Function 1, Green: Function 2") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  )
+
+# Compare the goodness of fit using AIC
+aic1 <- AIC(fit1)
+aic2 <- AIC(fit2)
+
+cat("AIC for temp.func: ", aic1, "\n")
+cat("AIC for temp.func2: ", aic2, "\n")
+
+if (aic1 < aic2) {
+  cat("temp.func fits the data better.\n")
+} else {
+  cat("temp.func2 fits the data better.\n")
+}
+
+```
+
+
+Fitting the functions with a different function called `nlsLM` from the `minpack.lm` package in R
+
+```{r}
+# Load libraries
+library(dplyr)
+library(ggplot2)
+library(minpack.lm)  # For more robust fitting
+
+# Define the first sinusoidal function
+temp.func <- function(t, a, b1, b2) {
+  a + b1 * sin(2 * pi * t / 365) + b2 * cos(2 * pi * t / 365)
+}
+
+# Define the second sinusoidal function
+temp.func2 <- function(t, T_0, T_1, omega, theta) {
+  T_0 * (1 + T_1 * cos(2 * pi * (omega * t + theta) / 365))
+}
+
+# Fit the first model using nls
+fit1 <- nls(mean_temperature ~ temp.func(day_of_year, a, b1, b2),
+            data = daily_avg_temp,
+            start = list(a = mean(daily_avg_temp$mean_temperature),
+                         b1 = sd(daily_avg_temp$mean_temperature) * 0.5,
+                         b2 = sd(daily_avg_temp$mean_temperature) * 0.5))
+
+# Fit the second model using nlsLM from minpack.lm
+fit2 <- nlsLM(mean_temperature ~ temp.func2(day_of_year, T_0, T_1, omega, theta),
+              data = daily_avg_temp,
+              start = list(T_0 = mean(daily_avg_temp$mean_temperature),
+                           T_1 = 0.1,
+                           omega = 1,
+                           theta = 0),
+              control = nls.lm.control(maxiter = 500))
+
+# Summary of the fits
+summary(fit1)
+summary(fit2)
+
+# Extract coefficients
+coeffs1 <- coef(fit1)
+coeffs2 <- coef(fit2)
+
+# Generate fitted values
+daily_avg_temp <- daily_avg_temp %>%
+  mutate(fitted_values1 = temp.func(day_of_year, coeffs1["a"], coeffs1["b1"], coeffs1["b2"]),
+         fitted_values2 = temp.func2(day_of_year, coeffs2["T_0"], coeffs2["T_1"], coeffs2["omega"], coeffs2["theta"]))
+
+# Plot the data and the fitted functions
+ggplot(daily_avg_temp, aes(x = day_of_year)) +
+  geom_line(aes(y = mean_temperature), color = "blue", size = 1) +
+  geom_line(aes(y = fitted_values1), color = "red", linetype = "dashed", size = 1) +
+  geom_line(aes(y = fitted_values2), color = "green", linetype = "dotted", size = 1) +
+  labs(title = "Daily Average Temperature with Fitted Sinusoidal Functions",
+       x = "Day of Year",
+       y = "Mean Temperature (°C)",
+       caption = "Blue: Actual, Red: Function 1, Green: Function 2") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  )
+
+# Compare the goodness of fit using AIC
+aic1 <- AIC(fit1)
+aic2 <- AIC(fit2)
+
+cat("AIC for temp.func: ", aic1, "\n")
+cat("AIC for temp.func2: ", aic2, "\n")
+
+if (aic1 < aic2) {
+  cat("temp.func fits the data better.\n")
+} else {
+  cat("temp.func2 fits the data better.\n")
+}
+
+```
+
+Same plot as above but formatting the x-axis to put month labels instead of days
+
+```{r}
+# Define month labels
+month_labels <- c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+
+# Define month breaks (approximately the middle of each month)
+month_breaks <- c(15, 45, 75, 105, 135, 165, 195, 225, 255, 285, 315, 345)
+
+# Plot the data and the fitted functions with month labels on x-axis
+ggplot(daily_avg_temp, aes(x = day_of_year)) +
+  geom_line(aes(y = mean_temperature), color = "blue", size = 1) +
+  geom_line(aes(y = fitted_values1), color = "red", linetype = "dashed", size = 1) +
+  geom_line(aes(y = fitted_values2), color = "green", linetype = "dotted", size = 1) +
+  scale_x_continuous(
+    breaks = month_breaks,
+    labels = month_labels
+  ) +
+  labs(title = "Daily Average Temperature with Fitted Sinusoidal Functions",
+       x = "Month",
+       y = "Mean Temperature (°C)",
+       caption = "Blue: Actual, Red: Function 1, Green: Function 2") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  )
+
+
+```
+
+
+Now I want to calculate R-squared values of the fit
+
+```{r, fig.width=11, fig.height=7}
+# Calculate R-squared for the first model
+rss1 <- sum((daily_avg_temp$mean_temperature - daily_avg_temp$fitted_values1)^2)
+tss1 <- sum((daily_avg_temp$mean_temperature - mean(daily_avg_temp$mean_temperature))^2)
+rsq1 <- 1 - rss1/tss1
+
+# Calculate R-squared for the second model
+rss2 <- sum((daily_avg_temp$mean_temperature - daily_avg_temp$fitted_values2)^2)
+tss2 <- sum((daily_avg_temp$mean_temperature - mean(daily_avg_temp$mean_temperature))^2)
+rsq2 <- 1 - rss2/tss2
+
+# Prepare month labels
+month_breaks <- cumsum(c(0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30))
+month_labels <- c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+
+# Plot the data and the fitted functions with R-squared values
+p1 <- ggplot(daily_avg_temp, aes(x = day_of_year)) +
+  geom_line(aes(y = mean_temperature), color = "blue", size = 1) +
+  geom_line(aes(y = fitted_values2), color = "darkred", linetype = "dashed", size = 2) +
+  scale_x_continuous(
+    breaks = month_breaks,
+    labels = month_labels
+  ) +
+  labs(title = "Mean Daily Temperature with Fitted Function",
+       x = "Month",
+       y = "Mean Daily Temperature (°C)"
+       #caption = "Blue: Actual, Darkred: Function"
+       ) +
+  theme_bw() +
+  theme(
+    plot.title = element_text(size = 24, face = "bold"),
+    axis.title = element_text(size = 20),
+    axis.text = element_text(size = 20),
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  annotate("text", x = 365, y = min(daily_avg_temp$mean_temperature), 
+           label = paste("R-squared:", round(rsq2, 2)), 
+           color = "darkred", hjust = 1, vjust = 0.1,
+           size = 10)
+
+p1 
+
+# Save the plot
+ggsave("/Users/jbaafi/Documents/Documents - Joseph's MacBook/Github/PhD_research_chapter_2/figures for presentation/temperature_func_fit.png", 
+       plot = p1, width = 11, height = 7, dpi = 300)
+```
+
+
+```{r, fig.height=6, fig.width=0, warning=FALSE, message=FALSE}
+# Load required packages
+library(dplyr)
+library(ggplot2)
+
+# Save combined weather data in a csv file
+#write.csv(combined_data, "weather_data.csv")
+
+# Load combined data (from 2008 - 2023 excluding 2012 because of so many missing values)
+weather_data <- read.csv("weather_data.csv")
+
+# Extract relevant columns
+temp_data <- weather_data %>% 
+  select(Date.Time, Year, Month, Day, Max.Temp...C., Min.Temp...C., Mean.Temp...C.)
+
+# Rename columns for easier reference
+temp_data <- temp_data %>%
+  rename(Max_Temp = Max.Temp...C., 
+         Min_Temp = Min.Temp...C., 
+         Mean_Temp = Mean.Temp...C.)
+
+# Calculate yearly average temperature
+yearly_avg_temp <- temp_data %>%
+  group_by(Year) %>%
+  summarise(Avg_Min_Temp = mean(Min_Temp, na.rm = TRUE),
+            Avg_Max_Temp = mean(Max_Temp, na.rm = TRUE),
+            Avg_Mean_Temp = mean(Mean_Temp, na.rm = TRUE))
+
+# Plot the yearly average temperature trends
+ggplot(yearly_avg_temp, aes(x = Year)) +
+  geom_line(aes(y = Avg_Min_Temp, color = "Min Temp"), linewidth = 1) +
+  geom_line(aes(y = Avg_Max_Temp, color = "Max Temp"), linewidth = 1) +
+  geom_line(aes(y = Avg_Mean_Temp, color = "Mean Temp"), linewidth = 1) +
+  labs(title = "Yearly Average Temperature (2008-2023)",
+       x = "Year", y = "Temperature (°C)",
+       color = "Temperature Type") +
+  theme_bw() +
+  scale_color_manual(values = c("Min Temp" = "blue", 
+                                "Max Temp" = "red", 
+                                "Mean Temp" = "green"))
+
+
+# Plot the yearly average temperature trends
+ggplot(yearly_avg_temp, aes(x = Year)) +
+  geom_point(aes(y = Avg_Min_Temp, color = "Min Temp")) +
+  geom_point(aes(y = Avg_Max_Temp, color = "Max Temp")) +
+  geom_point(aes(y = Avg_Mean_Temp, color = "Mean Temp")) +
+  labs(title = "Yearly Average Temperature (2008-2023)",
+       x = "Year", y = "Temperature (°C)",
+       color = "Temperature Type") +
+  theme_bw() +
+  scale_color_manual(values = c("Min Temp" = "blue", 
+                                "Max Temp" = "red", 
+                                "Mean Temp" = "green"))
+
+
+# Calculate monthly average temperature for each year
+yearly_monthly_avg_temp <- temp_data %>%
+  group_by(Year, Month) %>%
+  summarise(Avg_Min_Temp = mean(Min_Temp, na.rm = TRUE),
+            Avg_Max_Temp = mean(Max_Temp, na.rm = TRUE),
+            Avg_Mean_Temp = mean(Mean_Temp, na.rm = TRUE)) %>%
+  ungroup()
+
+# Convert Month to a factor for proper ordering
+yearly_monthly_avg_temp$Month <- factor(yearly_monthly_avg_temp$Month, levels = 1:12, labels = month.abb)
+
+# Plot temperature trends across years for each month
+ggplot(yearly_monthly_avg_temp, aes(x = Year)) +
+  geom_line(aes(y = Avg_Min_Temp, color = "Min Temp"), size = 1) +
+  geom_line(aes(y = Avg_Max_Temp, color = "Max Temp"), size = 1) +
+  geom_line(aes(y = Avg_Mean_Temp, color = "Mean Temp"), size = 1) +
+  facet_wrap(~Month) +  # Creates separate plots for each month
+  labs(title = "Yearly Temperature Trends for Each Month (2008-2023)",
+       x = "Year", y = "Temperature (°C)",
+       color = "Temperature Type") +
+  theme_bw() +
+  scale_color_manual(values = c("Min Temp" = "blue", 
+                                "Max Temp" = "red", 
+                                "Mean Temp" = "green"))
+
+```
+
+We do regression analysis to understand the trend in the yearly average data
+```{r, fig.height=6, fig.width=0, warning=FALSE, message=FALSE}
+
+# Plot yearly average temperatures with regression lines
+ggplot(yearly_avg_temp, aes(x = Year)) +
+  geom_point(aes(y = Avg_Min_Temp, color = "Min Temp")) +
+  geom_point(aes(y = Avg_Max_Temp, color = "Max Temp")) +
+  geom_point(aes(y = Avg_Mean_Temp, color = "Mean Temp")) +
+  geom_smooth(aes(y = Avg_Min_Temp, color = "Min Temp"), method = "lm", se = FALSE) +
+  geom_smooth(aes(y = Avg_Max_Temp, color = "Max Temp"), method = "lm", se = FALSE) +
+  geom_smooth(aes(y = Avg_Mean_Temp, color = "Mean Temp"), method = "lm", se = FALSE) +
+  labs(title = "Yearly Average Temperature Trend with Regression",
+       x = "Year", y = "Temperature (°C)",
+       color = "Temperature Type") +
+  theme_bw() +
+  scale_color_manual(values = c("Min Temp" = "blue", 
+                                "Max Temp" = "red", 
+                                "Mean Temp" = "green"))
+
+# Fit linear regression models for each temperature type
+min_temp_model <- lm(Avg_Min_Temp ~ Year, data = yearly_avg_temp)
+max_temp_model <- lm(Avg_Max_Temp ~ Year, data = yearly_avg_temp)
+mean_temp_model <- lm(Avg_Mean_Temp ~ Year, data = yearly_avg_temp)
+
+# Regression summaries
+summary(min_temp_model)  
+summary(max_temp_model)  
+summary(mean_temp_model) 
+```
+
+
+```{r, fig.height=10, fig.width=15, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(dplyr)
+
+data_2008 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403506_2008_P1D.csv")
+data_2009 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403506_2009_P1D.csv")
+data_2010 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403506_2010_P1D.csv")
+data_2011 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403506_2011_P1D.csv")
+data_2012 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403506_2012_P1D.csv")
+data_2013 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2013_P1D.csv")
+data_2014 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2014_P1D.csv")
+data_2015 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2015_P1D.csv")
+data_2016 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2016_P1D.csv")
+data_2017 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2017_P1D.csv")
+data_2018 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2018_P1D.csv")
+data_2019 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2019_P1D.csv")
+data_2020 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2020_P1D.csv")
+data_2021 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2021_P1D.csv")
+data_2022 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2022_P1D.csv")
+data_2023 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2023_P1D.csv")
+
+# Combine the data frames
+combined_data2 <- rbind(data_2008, data_2009, data_2010, data_2011, data_2012, data_2013, data_2014, data_2015, 
+                       data_2016, data_2017, data_2018, data_2019, data_2020, data_2021, data_2022, data_2023)
+
+# Ensure the date column is in Date format
+combined_data2$date <- as.Date(combined_data2$Date.Time, format = "%Y-%m-%d")
+
+# Extract the year from the date
+combined_data2 <- combined_data2 %>%
+  mutate(year = format(date, "%Y"))
+
+combined_data2 <- combined_data2 %>% 
+  mutate(total_rainfall = Total.Rain..mm.)
+
+# Plot the mean temperature for each year as a facet
+ggplot(combined_data2, aes(x = date, y = total_rainfall)) +
+  geom_line(color = "blue") +
+  labs(title = "Total Rainfall by Year",
+       x = "Date",
+       y = "Total Rainfall (mm)") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 26, face = "bold"),
+    axis.title = element_text(size = 18),
+    axis.text = element_text(size = 16),
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
+    strip.text = element_text(size = 16) # Adjust facet label size
+  ) +
+  facet_wrap(~ year, scales = "free_x", ncol = 4) + # Facet by 
+  scale_x_continuous(breaks = seq(0, 365, by = 60), 
+                     labels = function(x) format(as.Date(x, origin = "2020-01-01"), "%b"))
+
+```
+
+
+Plotting the same data with x-axis formatted to show the dates
+
+```{r, fig.height=14, fig.width=18, warning=FALSE, message=FALSE}
+ggplot(combined_data2, aes(x = date, y = total_rainfall)) +
+  geom_line(color = "blue") +
+  labs(title = "Total Rainfall by Year",
+       x = "Date",
+       y = "Total Rainfall (mm)") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 26, face = "bold"),
+    axis.title = element_text(size = 18),
+    axis.text = element_text(size = 16),
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
+    strip.text = element_text(size = 16) # Adjust facet label size
+  ) +
+  facet_wrap(~ year, scales = "free_x", ncol = 4) +
+  scale_x_date(date_breaks = "3 months", # Set the interval for x-axis ticks
+               date_labels = "%b %Y") # Format date labels
+
+```
+
+
+Plot all dataset on the same plot
+```{r, fig.height=7, fig.width=11, warning=FALSE, message=FALSE}
+
+# Plot rainfall
+plot_rainfall <- ggplot(combined_data2, aes(x = date, y = total_rainfall)) +
+  geom_line(color = "blue") +
+  labs(title = "Total Daily Rainfall Across Years",
+       x = "Date",
+       y = "Total Daily Rainfall (mm)") +
+  theme_bw() +
+  theme(
+    plot.title = element_text(size = 24, face = "bold"),
+    axis.title = element_text(size = 20),
+    axis.text = element_text(size = 18),
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  scale_x_date(
+    breaks = as.Date(paste0(seq(2008, 2022, by = 2), "-01-01")),
+    labels = as.character(seq(2008, 2022, by = 2))
+  )
+plot_rainfall 
+
+# Save the plot
+#ggsave("rainfall_func_fit.png", plot = p2, width = 12, height = 8, dpi = 300)
+
+```
+
+
+## Compute Daily mean total Rainfall and Fit a Periodic Function
+
+```{r}
+# Load libraries
+library(dplyr)
+
+# Read the data
+data_2008 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403506_2008_P1D.csv")
+data_2009 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403506_2009_P1D.csv")
+data_2010 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403506_2010_P1D.csv")
+data_2011 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403506_2011_P1D.csv")
+#data_2012 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403506_2012_P1D.csv")
+data_2013 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2013_P1D.csv")
+data_2014 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2014_P1D.csv")
+data_2015 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2015_P1D.csv")
+data_2016 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2016_P1D.csv")
+data_2017 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2017_P1D.csv")
+data_2018 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2018_P1D.csv")
+data_2019 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2019_P1D.csv")
+data_2020 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2020_P1D.csv")
+data_2021 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2021_P1D.csv")
+data_2022 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2022_P1D.csv")
+data_2023 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2023_P1D.csv")
+
+# Combine the data frames
+combined_data2 <- rbind(data_2008, data_2009, data_2010, data_2011, data_2013, data_2014, data_2015, 
+                       data_2016, data_2017, data_2018, data_2019, data_2020, data_2021, data_2022, data_2023)
+
+# Ensure the date column is in Date format
+combined_data2$date <- as.Date(combined_data2$Date.Time, format = "%Y-%m-%d")
+
+# Extract the mean temperature column
+combined_data2 <- combined_data2 %>%
+  mutate(total_rainfall = Total.Rain..mm.)
+  
+# Create a day of year variable
+combined_data2 <- combined_data2 %>%
+  mutate(day_of_year = as.numeric(format(date, "%j")))
+
+# Compute the daily average total rainfall across the 15 years
+daily_avg_total_rain <- combined_data2 %>%
+  group_by(day_of_year) %>%
+  summarize(mean_total_rainfall = mean(total_rainfall, na.rm = TRUE))
+
+# View the daily average temperature data
+head(daily_avg_total_rain)
+
+ggplot(combined_data2, aes(x = date, y = total_rainfall)) +
+  geom_line(color = "blue") +
+  labs(title = "Total Rainfall by Year",
+       x = "Date",
+       y = "Total Rainfall (mm)") +
+  theme_bw()
+
+ggplot(daily_avg_total_rain, aes(x = day_of_year, y = mean_total_rainfall)) +
+  geom_line(color = "blue") +
+  labs(title = "Mean Rainfall by Year",
+       x = "Date",
+       y = "Total Rainfall (mm)") +
+  theme_bw()
+
+```
+
+
+Fitting functions to the daily_avg_total_rain data and compare their fits
+ 
+```{r, fig.height=10, fig.width=15, warning=FALSE, message=FALSE}
+# Load libraries
+library(dplyr)
+library(ggplot2)
+
+# Define the first sinusoidal function
+rain.func <- function(t, a, b1, b2) {
+  a + b1 * sin(2 * pi * t / 365) + b2 * cos(2 * pi * t / 365)
+}
+
+# Define the second sinusoidal function
+rain.func2 <- function(t, R_0, R_1, omega, theta) {
+  R_0 * (1 + R_1 * cos(2 * pi * (omega * t + theta) / 365))
+}
+
+# Fit the first model using nls
+fit1 <- nls(mean_total_rainfall ~ rain.func(day_of_year, a, b1, b2),
+            data = daily_avg_total_rain,
+            start = list(a = mean(daily_avg_total_rain$mean_total_rainfall),
+                         b1 = sd(daily_avg_total_rain$mean_total_rainfall) * 0.5,
+                         b2 = sd(daily_avg_total_rain$mean_total_rainfall) * 0.5))
+
+# Fit the second model using nls
+fit2 <- nls(mean_total_rainfall ~ rain.func2(day_of_year, R_0, R_1, omega, theta),
+            data = daily_avg_total_rain,
+            start = list(R_0 = mean(daily_avg_total_rain$mean_total_rainfall),
+                         R_1 = 1,
+                         omega = 1,
+                         theta = 1))
+
+# Summary of the fits
+summary(fit1)
+summary(fit2)
+
+# Extract coefficients
+coeffs1 <- coef(fit1)
+coeffs2 <- coef(fit2)
+
+# Generate fitted values
+daily_avg_total_rain <- daily_avg_total_rain %>%
+  mutate(fitted_values1 = rain.func(day_of_year, coeffs1["a"], coeffs1["b1"], coeffs1["b2"]),
+         fitted_values2 = rain.func2(day_of_year, coeffs2["R_0"], coeffs2["R_1"], coeffs2["omega"], coeffs2["theta"]))
+
+# Plot the data and the fitted functions
+ggplot(daily_avg_total_rain, aes(x = day_of_year)) +
+  geom_line(aes(y = mean_total_rainfall), color = "blue", size = 1) +
+  geom_line(aes(y = fitted_values1), color = "red", linetype = "dashed", size = 1) +
+  geom_line(aes(y = fitted_values2), color = "green", linetype = "dotted", size = 1) +
+  labs(title = "Daily Average Total Rainfall with Fitted Sinusoidal Functions",
+       x = "Day of Year",
+       y = "Daily Mean Total Rainfall (mm)",
+       caption = "Blue: Actual, Red: Function 1, Green: Function 2") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 26, face = "bold"),
+    axis.title = element_text(size = 18),
+    axis.text = element_text(size = 16),
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  )
+
+# Compare the goodness of fit using AIC
+aic1 <- AIC(fit1)
+aic2 <- AIC(fit2)
+
+cat("AIC for rain.func: ", aic1, "\n")
+cat("AIC for rain.func2: ", aic2, "\n")
+
+if (aic1 < aic2) {
+  cat("rain.func fits the data better.\n")
+} else {
+  cat("rain.func2 fits the data better.\n")
+}
+
+```
+
+Calculate R-squared values of the fit
+```{r}
+# Calculate R-squared for the first model
+rss1 <- sum((daily_avg_total_rain$mean_total_rainfall - daily_avg_total_rain$fitted_values1)^2)
+tss1 <- sum((daily_avg_total_rain$mean_total_rainfall - mean(daily_avg_total_rain$mean_total_rainfall))^2)
+rsq1 <- 1 - rss1/tss1
+
+# Calculate R-squared for the second model
+rss2 <- sum((daily_avg_total_rain$mean_total_rainfall - daily_avg_total_rain$fitted_values2)^2)
+tss2 <- sum((daily_avg_total_rain$mean_total_rainfall - mean(daily_avg_total_rain$mean_total_rainfall))^2)
+rsq2 <- 1 - rss2/tss2
+
+# Prepare month labels
+month_breaks <- cumsum(c(0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30)) + 15
+month_labels <- c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+
+# Plot the data and the fitted functions with R-squared values
+ggplot(daily_avg_total_rain, aes(x = day_of_year)) +
+  geom_line(aes(y = mean_total_rainfall), color = "blue", size = 1) +
+  geom_line(aes(y = fitted_values1), color = "red", linetype = "dashed", size = 1) +
+  geom_line(aes(y = fitted_values2), color = "green", linetype = "dotted", size = 1) +
+  scale_x_continuous(
+    breaks = month_breaks,
+    labels = month_labels
+  ) +
+   labs(title = "Daily Average Total Rainfall with Fitted Sinusoidal Functions",
+       x = "Day of Year",
+       y = "Daily Mean Total Rainfall (mm)",
+       caption = "Blue: Actual, Red: Function 1, Green: Function 2") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  annotate("text", x = 365, y = min(daily_avg_temp$mean_temperature), 
+           label = paste("R-squared (Function 1):", round(rsq1, 2)), 
+           color = "red", hjust = 1, vjust = 0.5) +
+  annotate("text", x = 365, y = min(daily_avg_temp$mean_temperature) - 1, 
+           label = paste("R-squared (Function 2):", round(rsq2, 2)), 
+           color = "green", hjust = 1, vjust = 1)
+```
+
+```{r}
+# Load necessary libraries
+library(tidyverse)
+library(lubridate)
+
+# Assuming your data is in a dataframe called 'rainfall_data'
+# with columns 'date' and 'rainfall'
+rainfall_data <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2023_P1D.csv")
+
+rainfall_data$date <- as.Date(rainfall_data$Date.Time)
+rainfall_data$day_of_year <- yday(rainfall_data$date)
+rainfall_data$year <- year(rainfall_data$date)
+
+
+# Define the Fourier series function
+fourier_series <- function(t, a0, a1, b1, a2, b2) {
+  a0 + a1 * sin(2 * pi * t / 365) + b1 * cos(2 * pi * t / 365) +
+    a2 * sin(4 * pi * t / 365) + b2 * cos(4 * pi * t / 365)
+}
+
+# Fit the model
+fit <- nls(Total.Rain..mm. ~ fourier_series(day_of_year, a0, a1, b1, a2, b2),
+           data = rainfall_data,
+           start = list(a0 = mean(rainfall_data$Total.Rain..mm.),
+                        a1 = 0, b1 = 0,
+                        a2 = 0, b2 = 0))
+
+# Extract fitted values
+rainfall_data$fitted <- predict(fit)
+
+
+ggplot(rainfall_data, aes(x = date)) +
+  geom_line(aes(y = Total.Rain..mm.), color = "blue") +
+  geom_line(aes(y = fitted), color = "red", linetype = "dashed") +
+  labs(title = "Daily Rainfall with Fitted Fourier Series",
+       x = "Date",
+       y = "Rainfall (mm)") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  )
+
+residuals <- rainfall_data$Total.Rain..mm. - rainfall_data$fitted
+ss_res <- sum(residuals^2)
+ss_tot <- sum((rainfall_data$Total.Rain..mm. - mean(rainfall_data$Total.Rain..mm.))^2)
+r_squared <- 1 - (ss_res / ss_tot)
+
+print(paste("R-squared: ", r_squared))
+
+```
+
+```{r}
+# Load necessary libraries
+library(tidyverse)
+library(lubridate)
+
+# Load your data
+rainfall_data <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2023_P1D.csv")
+# Ensure the date column is in Date format
+rainfall_data$date <- as.Date(rainfall_data$Date.Time)
+rainfall_data$rainfall <- rainfall_data$Total.Rain..mm.
+
+
+# Create a sequence of dates for interpolation
+full_dates <- seq.Date(min(rainfall_data$date), max(rainfall_data$date), by = "day")
+
+# Interpolate rainfall data using spline
+spline_interpolation <- data.frame(
+  date = full_dates,
+  rainfall = spline(rainfall_data$date, rainfall_data$rainfall, xout = full_dates)$y
+)
+
+# Plot the interpolated data
+ggplot() +
+  geom_line(data = rainfall_data, aes(x = date, y = rainfall), color = "blue") +
+  geom_line(data = spline_interpolation, aes(x = date, y = rainfall), color = "red", linetype = "dashed") +
+  labs(title = "Spline Interpolation of Daily Rainfall",
+       x = "Date",
+       y = "Rainfall (mm)") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  )
+
+```
+
+Using the *Loess Interpolation* method
+```{r}
+# Perform loess interpolation
+loess_fit <- loess(rainfall ~ as.numeric(date), data = rainfall_data, span = 0.1)
+
+# Predict values using loess fit
+loess_interpolation <- data.frame(
+  date = full_dates,
+  rainfall = predict(loess_fit, newdata = as.numeric(full_dates))
+)
+
+# Plot the interpolated data
+ggplot() +
+  geom_line(data = rainfall_data, aes(x = date, y = rainfall), color = "blue") +
+  geom_line(data = loess_interpolation, aes(x = date, y = rainfall), color = "green", linetype = "dashed") +
+  labs(title = "Loess Interpolation of Daily Rainfall",
+       x = "Date",
+       y = "Rainfall (mm)") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  )
+
+```
+
+Spline interpolation method for multiple years data fitting. 
+```{r, fig.height=10, fig.width=15, warning=FALSE, message=FALSE}
+data_2021 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2021_P1D.csv")
+data_2022 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2022_P1D.csv")
+data_2023 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2023_P1D.csv")
+
+
+# Combine the data frames
+rainfall_data <- rbind(data_2021, data_2022, data_2023)
+
+# Ensure the date column is in Date format
+rainfall_data$date <- as.Date(rainfall_data$Date.Time)
+rainfall_data$rainfall <- rainfall_data$Total.Rain..mm.
+
+
+# Create a sequence of dates for interpolation
+full_dates <- seq.Date(min(rainfall_data$date), max(rainfall_data$date), by = "day")
+
+# Interpolate rainfall data using spline
+spline_interpolation <- data.frame(
+  date = full_dates,
+  rainfall = spline(rainfall_data$date, rainfall_data$rainfall, xout = full_dates)$y
+)
+
+# Plot the interpolated data
+ggplot() +
+  geom_line(data = rainfall_data, aes(x = date, y = rainfall), color = "blue") +
+  geom_line(data = spline_interpolation, aes(x = date, y = rainfall), color = "red", linetype = "dashed") +
+  labs(title = "Spline Interpolation of Daily Rainfall",
+       x = "Date",
+       y = "Rainfall (mm)") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  )
+
+
+# calculate the R-squared value:
+
+# Merge the observed and fitted data
+merged_data <- merge(rainfall_data, spline_interpolation, by = "date", suffixes = c("_observed", "_fitted"))
+
+# Calculate residuals
+merged_data <- merged_data %>%
+  mutate(residuals = rainfall_observed - rainfall_fitted)
+
+# Calculate the Total Sum of Squares (TSS)
+TSS <- sum((merged_data$rainfall_observed - mean(merged_data$rainfall_observed))^2)
+
+# Calculate the Residual Sum of Squares (RSS)
+RSS <- sum(merged_data$residuals^2)
+
+# Calculate R-squared
+R_squared <- 1 - (RSS / TSS)
+
+# Print R-squared value
+R_squared
+
+```
+
+Simulate data to illustrate the method I want to use to model rainfall data.
+
+```{r}
+# Load package
+library(ggplot2)
+
+# Set seed for reproducibility
+set.seed(123)
+
+# Simulate observed daily rainfall data for 1 year
+observed_rainfall <- runif(365, min = 0, max = 80)
+
+# Create a data frame for the observed data
+observed_data <- data.frame(day = 1:365, rainfall = observed_rainfall)
+
+# Sample with replacement to create a new dataset
+sampled_rainfall <- sample(observed_rainfall, size = 365, replace = TRUE)
+
+# Create a data frame for the sampled data
+sampled_data <- data.frame(day = 1:365, rainfall = sampled_rainfall)
+
+# Plot the observed and sampled rainfall data
+ggplot() +
+  geom_line(data = observed_data, aes(x = day, y = rainfall), color = "blue", linewidth = 1, linetype = "solid") +
+  geom_line(data = sampled_data, aes(x = day, y = rainfall), color = "red", linewidth = 1, linetype = "dashed") +
+  labs(title = "Observed vs. Sampled Rainfall Data",
+       x = "Day of Year",
+       y = "Rainfall (mm)",
+       caption = "Blue: Observed, Red: Sampled") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12)
+  )
+
+```
+ 
+
+```{r}
+# Read the data
+data_2008 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403506_2008_P1D.csv")
+data_2009 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403506_2009_P1D.csv")
+data_2010 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403506_2010_P1D.csv")
+data_2011 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403506_2011_P1D.csv")
+#data_2012 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403506_2012_P1D.csv")
+data_2013 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2013_P1D.csv")
+data_2014 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2014_P1D.csv")
+data_2015 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2015_P1D.csv")
+data_2016 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2016_P1D.csv")
+data_2017 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2017_P1D.csv")
+data_2018 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2018_P1D.csv")
+data_2019 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2019_P1D.csv")
+data_2020 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2020_P1D.csv")
+data_2021 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2021_P1D.csv")
+data_2022 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2022_P1D.csv")
+data_2023 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2023_P1D.csv")
+
+# Combine the data frames
+rainfall_data <- rbind(data_2008, data_2009, data_2010, data_2011, data_2013, data_2014, data_2015, 
+                       data_2016, data_2017, data_2018, data_2019, data_2020, data_2021, data_2022, data_2023)
+
+# Select some columns
+rainfall_data <- rainfall_data %>% 
+  select(Year, Month, Day, Total.Rain..mm.)
+
+# Rename the column
+rainfall_data <- rainfall_data %>%
+  rename(Rainfall_mm = Total.Rain..mm.)
+
+# Check the new column names
+colnames(rainfall_data)
+
+# Convert Rainfall_mm to numeric
+rainfall_data$Rainfall_mm <- as.numeric(rainfall_data$Rainfall_mm)
+
+# Save data as a csv file
+#write.csv(x = rainfall_data, file = "rainfall_data.csv")
+
+# If you want to use the saved data, you can load it with the variable name, rainfall_data and the rest of the code will work.
+
+# Create an empirical distribution of rainfall
+# Filter positive values from Rainfall_mm
+rainfall_values <- rainfall_data %>%
+  filter(!is.na(Rainfall_mm), Rainfall_mm > 0) %>%
+  pull(Rainfall_mm)
+
+# Function to sample rainfall at time t
+sample_rainfall <- function(data, n = 1) {
+  sample(data, size = n, replace = TRUE)
+}
+
+# Example usage
+set.seed(42) # For reproducibility
+rainfall_at_t <- sample_rainfall(data=rainfall_values)
+print(rainfall_at_t)
+
+# Integrate into the mosquito population model
+# For each time step t, we can draw a new rainfall value:
+time_steps <- 1:365  # Assuming 1 year of daily data
+rainfall_simulated <- sapply(time_steps, 
+                             function(t) sample_rainfall(rainfall_values)) 
+
+# Create a data frame for plotting
+rainfall_simulated <- data.frame(
+  time = time_steps, 
+  rainfall = rainfall_simulated
+  )
+
+# Plot the simulated rainfall data
+ggplot(rainfall_simulated, aes(x = time, y = rainfall)) +
+  geom_line(color = "blue", linewidth = 1) +  # Line plot for rainfall
+  labs(
+    title = "Simulated Daily Rainfall",
+    x = "Time (Days)",
+    y = "Rainfall (mm)"
+  ) +
+  theme_bw()  # Use a clean theme
+
+```
+
+
+```{r}
+# Load necessary packages
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+
+# Load yearly data set
+data_2008 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403506_2008_P1D.csv")
+data_2009 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403506_2009_P1D.csv")
+data_2010 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403506_2010_P1D.csv")
+data_2011 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403506_2011_P1D.csv")
+#data_2012 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403506_2012_P1D.csv")
+data_2013 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2013_P1D.csv")
+data_2014 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2014_P1D.csv")
+data_2015 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2015_P1D.csv")
+data_2016 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2016_P1D.csv")
+data_2017 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2017_P1D.csv")
+data_2018 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2018_P1D.csv")
+data_2019 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2019_P1D.csv")
+data_2020 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2020_P1D.csv")
+data_2021 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2021_P1D.csv")
+data_2022 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2022_P1D.csv")
+data_2023 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2023_P1D.csv")
+
+# Combine the data frames
+rainfall_data <- rbind(data_2008, data_2009, data_2010, data_2011, data_2013, data_2014, data_2015, 
+                       data_2016, data_2017, data_2018, data_2019, data_2020, data_2021, data_2022, data_2023)
+
+# Make sure it is a data frame
+rainfall_data <- as.data.frame(rainfall_data)
+
+# Select some columns
+rainfall_data <- rainfall_data %>% 
+  select(Date.Time, Year, Month, Day, Total.Rain..mm.)
+
+# Rename a column
+rainfall_data <- rainfall_data %>%
+  rename(Total.Rain.mm = Total.Rain..mm.)
+
+# Convert Rainfall_mm to numeric
+#rainfall_data$Total.Rain.mm<- as.numeric(rainfall_data$Total.Rain.mm)
+
+# Convert Date.Time to Date format
+rainfall_data <- rainfall_data %>%
+  mutate(Date.Time = as.Date(Date.Time), 
+         Month = month(Date.Time)) %>%
+  filter(!is.na(Total.Rain.mm))  # Remove NAs
+
+# Save data frame in a csv file
+#write.csv(rainfall_data, "rainfall_data.csv")
+
+ # Function to sample rainfall while preserving seasonality across multiple years
+sample_rainfall <- function(t, data) {
+  # Convert time (in days) to a Date object assuming t starts from Jan 1, 2013
+  reference_date <- as.Date("2008-01-01") + t
+  current_month <- format(reference_date, "%m") %>% as.numeric()
+  
+  # Filter all rainfall values recorded in that month from 2013–2023
+  monthly_data <- data %>%
+    filter(Month == current_month) %>%
+    pull(Total.Rain.mm)
+  
+  # Sample from all available values for that month
+  if (length(monthly_data) > 0) {
+    return(sample(monthly_data, size = 1, replace = TRUE))
+  } else {
+    return(0)  # Return 0 if no data is available for that month
+  }
+}
+
+# Simulate 10 years (3650 days) of synthetic rainfall
+#set.seed(123)  # For reproducibility
+simulated_rainfall <- data.frame(
+  Day = 1:3650,
+  Simulated_Rainfall = sapply(1:3650, function(t) sample_rainfall(t, rainfall_data))
+)
+
+# Assign years to the simulated data
+simulated_rainfall$Year <- rep(2008:2023, each = 365)[1:nrow(simulated_rainfall)]
+simulated_rainfall$Month <- rep(1:12, times = ceiling(nrow(simulated_rainfall) / 12))[1:nrow(simulated_rainfall)]
+
+# Plot observed vs. simulated rainfall
+ggplot() +
+  geom_line(data = rainfall_data, aes(x = yday(Date.Time), y = Total.Rain.mm, color = "Observed"), alpha = 0.5) +
+  geom_line(data = simulated_rainfall, aes(x = Day %% 365, y = Simulated_Rainfall, color = "Simulated")) +
+  labs(x = "Day of Year", 
+       y = "Total Rainfall (mm)", 
+       title = "Observed vs. Simulated Rainfall (Preserving Seasonality)") +
+  scale_color_manual(values = c("Observed" = "blue", "Simulated" = "red")) +
+  theme_minimal()
+
+```
+
+
+```{r}
+# 1. Calculate the mean monthly rainfall for the observed data
+observed_monthly_rainfall <- rainfall_data %>%
+  group_by(Month) %>%
+  summarise(Mean_Rainfall = mean(Total.Rain.mm, na.rm = TRUE))
+
+# 2. Calculate the mean monthly rainfall for the simulated data
+simulated_monthly_rainfall <- simulated_rainfall %>%
+  group_by(Month) %>%
+  summarise(Mean_Rainfall = mean(Simulated_Rainfall, na.rm = TRUE))
+
+# 3. Plot the observed and simulated mean monthly rainfall
+ggplot() +
+  geom_line(data = observed_monthly_rainfall, aes(x = Month, y = Mean_Rainfall, color = "Observed"), linewidth = 1.2) +
+  geom_line(data = simulated_monthly_rainfall, aes(x = Month, y = Mean_Rainfall, color = "Simulated"), linewidth = 1.2) +
+  scale_color_manual(values = c("Observed" = "blue", "Simulated" = "red")) +
+  labs(x = "Month", y = "Mean Monthly Rainfall (mm)", 
+       title = "Mean Monthly Rainfall: Observed vs. Simulated",
+       color = "Data Type") +
+  theme_minimal() +
+  theme(legend.position = "top") +
+  scale_x_continuous(breaks = 1:12, labels = month.name)  # Add month names on x-axis
+
+```
+
+
+```{r}
+# Load necessary libraries
+library(dplyr)
+library(ggplot2)
+
+# Load data
+rainfall_data <- read.csv("rainfall_data2.csv")
+
+# Summarize monthly total rainfall across years
+monthly_rainfall_trend <- rainfall_data %>%
+  group_by(Year, Month) %>%
+  summarize(Total_Rainfall = sum(Total.Rain..mm., na.rm = TRUE), .groups = "drop")
+
+# Fit a linear trend model
+rainfall_trend_model <- lm(Total_Rainfall ~ Year * as.factor(Month), data = monthly_rainfall_trend)
+
+# View summary of model
+summary(rainfall_trend_model)
+
+
+
+# Function to sample rainfall with trend adjustment
+sample_rainfall_with_trend <- function(t, data, model) {
+  # Convert t (days) into date format
+  reference_date <- as.Date("2013-01-01") + t
+  current_year <- as.numeric(format(reference_date, "%Y"))
+  current_month <- as.numeric(format(reference_date, "%m"))
+  
+  # Predict expected rainfall for the given year and month
+  predicted_rainfall <- predict(model, newdata = data.frame(Year = current_year, Month = current_month))
+  
+  # Sample historical rainfall for that month
+  monthly_data <- data %>%
+    filter(Month == current_month) %>%
+    pull(Total.Rain..mm.)
+  
+  # Sample and adjust based on trend
+  if (length(monthly_data) > 0) {
+    sampled_value <- sample(monthly_data, size = 1, replace = TRUE)
+    adjusted_value <- sampled_value + (predicted_rainfall - mean(monthly_data, na.rm = TRUE))
+    return(max(adjusted_value, 0))  # Ensure non-negative rainfall
+  } else {
+    return(0)  
+  }
+}
+
+
+# Generate simulated data
+simulate_rainfall <- function(data, model, start_date, end_date) {
+  days <- seq(as.Date(start_date), as.Date(end_date), by = "day")
+  simulated_rainfall <- sapply(seq_along(days), function(t) {
+    sample_rainfall_with_trend(t, data, model)
+  })
+  return(data.frame(Date = days, Simulated_Rainfall = simulated_rainfall))
+}
+
+# Define start and end date for simulation
+start_date <- "2013-01-01"
+end_date <- "2023-12-31"
+
+# Generate simulated data
+simulated_data <- simulate_rainfall(rainfall_data, rainfall_trend_model, start_date, end_date)
+
+# Prepare observed data
+observed_data <- rainfall_data %>%
+  select(Date.Time, Total.Rain..mm.) %>%
+  rename(Date = Date.Time, Observed_Rainfall = Total.Rain..mm.)
+
+# Merge observed and simulated data
+plot_data <- merge(observed_data, simulated_data, by = "Date", all = TRUE) %>% 
+  filter(!is.na(Observed_Rainfall)) %>% 
+  filter(!is.na(Simulated_Rainfall))
+
+# Plot observed vs. simulated rainfall
+ggplot(plot_data, aes(x = Date)) +
+  geom_line(aes(y = Observed_Rainfall, color = "Observed", group = 1), alpha = 0.7) +
+  geom_line(aes(y = Simulated_Rainfall, color = "Simulated", group = 1), alpha = 0.7, linetype = "dashed") +
+  scale_color_manual(values = c("Observed" = "blue", "Simulated" = "red")) +
+  labs(title = "Observed vs Simulated Rainfall",
+       x = "Year", y = "Total Rainfall (mm)",
+       color = "Legend") +
+  theme_minimal()
+
+```
+
+```{r}
+library(dplyr)
+library(fitdistrplus)
+
+# Load data
+rainfall_data <- read.csv("rainfall_data2.csv")
+
+# Remove NAs and ensure proper formatting
+rainfall_data <- rainfall_data %>%
+  rename(Total.Rain.mm = Total.Rain..mm.) %>% 
+  filter(!is.na(Total.Rain.mm)) %>%
+  mutate(Month = lubridate::month(Date.Time))
+
+# Compute monthly probabilities of rainfall occurrence and intensity
+rainfall_stats <- rainfall_data %>%
+  group_by(Month) %>%
+  summarise(
+    rain_prob = mean(Total.Rain.mm > 0),  # Probability of rainfall occurring
+    shape = fitdist(Total.Rain.mm[Total.Rain.mm > 0], "gamma")$estimate["shape"],
+    rate = fitdist(Total.Rain.mm[Total.Rain.mm > 0], "gamma")$estimate["rate"]
+  )
+
+generate_rainfall <- function(t) {
+  # Extract month from time step
+  current_month <- month(ymd("2000-01-01") + days(t %% 365))
+  
+  # Get rainfall data for that month
+  monthly_data <- rainfall_data %>% 
+    filter(Month == current_month) %>% 
+    pull(Total.Rain.mm)
+  
+  # Check if data exists for that month
+  if (length(monthly_data) == 0) {
+    return(0)  # If no data, return 0
+  }
+  
+  # Probability of rainfall (fraction of days with rain)
+  prob_rain <- mean(monthly_data > 0, na.rm = TRUE)  # Proportion of rainy days
+  
+  # Decide whether it rains on this day
+  if (runif(1) < prob_rain) {
+    return(sample(monthly_data[monthly_data > 0], size = 1, replace = TRUE))
+  } else {
+    return(0)  # No rain on this day
+  }
+}
+
+# Generate simulated rainfall for 10 years
+#set.seed(123)
+simulated_rainfall <- data.frame(
+  Day = 1:(365),
+  Simulated_Rainfall = sapply(1:(10 * 365), generate_rainfall)
+)
+
+
+# Assign correct years and months
+simulated_rainfall$Year <- rep(2013:2023, each = 365)[1:nrow(simulated_rainfall)]
+simulated_rainfall$Month <- rep(1:12, times = ceiling(nrow(simulated_rainfall) / 12))[1:nrow(simulated_rainfall)]
+
+
+
+library(ggplot2)
+
+ggplot() +
+  geom_line(data = rainfall_data, aes(x = yday(Date.Time), y = Total.Rain.mm, color = "Observed"), alpha = 0.5) +
+  geom_line(data = simulated_rainfall, aes(x = Day %% 365, y = Simulated_Rainfall, color = "Simulated")) +
+  labs(x = "Day of Year", 
+       y = "Total Rainfall (mm)", 
+       title = "Observed vs. Simulated Rainfall (Preserving Seasonality)") +
+  scale_color_manual(values = c("Observed" = "blue", "Simulated" = "red")) +
+  theme_minimal()
+
+
+
+
+```
+
+
+```{r}
+# 1. Calculate the mean monthly rainfall for the observed data
+observed_monthly_rainfall2 <- rainfall_data %>%
+  group_by(Month) %>%
+  summarise(Mean_Rainfall = mean(Total.Rain.mm, na.rm = TRUE))
+
+# 2. Calculate the mean monthly rainfall for the simulated data
+simulated_monthly_rainfall2 <- simulated_rainfall %>%
+  group_by(Month) %>%
+  summarise(Mean_Rainfall = mean(Simulated_Rainfall, na.rm = TRUE))
+
+# 3. Plot the observed and simulated mean monthly rainfall
+ggplot() +
+  geom_line(data = observed_monthly_rainfall2, aes(x = Month, y = Mean_Rainfall, color = "Observed"), linewidth = 1.2) +
+  geom_line(data = simulated_monthly_rainfall2, aes(x = Month, y = Mean_Rainfall, color = "Simulated"), linewidth = 1.2) +
+  scale_color_manual(values = c("Observed" = "blue", "Simulated" = "red")) +
+  labs(x = "Month", y = "Mean Monthly Rainfall (mm)", 
+       title = "Mean Monthly Rainfall: Observed vs. Simulated",
+       color = "Data Type") +
+  theme_minimal() +
+  theme(legend.position = "top") +
+  scale_x_continuous(breaks = 1:12, labels = month.name)  # Add month names on x-axis
+
+```
+
+```{r}
+# Load libraries
+library(dplyr)
+library(lubridate)
+
+# Read the data
+data_2008 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403506_2008_P1D.csv")
+data_2009 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403506_2009_P1D.csv")
+data_2010 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403506_2010_P1D.csv")
+data_2011 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403506_2011_P1D.csv")
+#data_2012 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403506_2012_P1D.csv")
+data_2013 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2013_P1D.csv")
+data_2014 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2014_P1D.csv")
+data_2015 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2015_P1D.csv")
+data_2016 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2016_P1D.csv")
+data_2017 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2017_P1D.csv")
+data_2018 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2018_P1D.csv")
+data_2019 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2019_P1D.csv")
+data_2020 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2020_P1D.csv")
+data_2021 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2021_P1D.csv")
+data_2022 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2022_P1D.csv")
+data_2023 <- read.csv("weather data/2000-2012 data/en_climate_daily_NL_8403505_2023_P1D.csv")
+
+
+# Combine the data frames
+combined_data2 <- rbind(data_2008, data_2009, data_2010, data_2011, data_2013, data_2014, data_2015, 
+                       data_2016, data_2017, data_2018, data_2019, data_2020, data_2021, data_2022, data_2023)
+
+
+# Step 1: Clean and prepare the data
+combined_data2$Date <- ymd(combined_data2$Date)
+
+# Check the actual column name of rainfall
+names(combined_data2)
+
+# Example: Adjust this if your column has a different name
+combined_data2 <- combined_data2 %>%
+  rename(Rain = `Total.Rain..mm.`) %>%
+  mutate(Rain = as.character(Rain),
+         Rain = ifelse(Rain == "T", 0.01, Rain),
+         Rain = as.numeric(Rain),
+         Year = year(Date),
+         Month = month(Date))
+
+# Step 2: Calculate monthly total rainfall per year
+monthly_totals <- combined_data2 %>%
+  group_by(Year, Month) %>%
+  summarise(MonthlyRain = sum(Rain, na.rm = TRUE)) %>%
+  ungroup()
+
+# Step 3: Compute average monthly total rainfall across years
+monthly_avg_rain <- monthly_totals %>%
+  group_by(Month) %>%
+  summarise(AvgRain = mean(MonthlyRain, na.rm = TRUE))
+
+# Step 4: Fit sinusoidal function
+rain.func <- function(t, R_0, R_1, omega, theta) {
+  R_0 * (1 + R_1 * cos(2 * pi * (omega * t + theta) / 365))
+}
+
+# Use middle of each month (in days of year) as t values
+t_vals <- c(15, 45, 74, 105, 135, 165, 195, 226, 256, 287, 317, 347)
+rain_vals <- monthly_avg_rain$AvgRain
+
+# Fit with nls
+fit <- nls(rain_vals ~ rain.func(t_vals, R_0, R_1, omega, theta),
+           start = list(R_0 = mean(rain_vals), R_1 = 0.5, omega = 1, theta = 0),
+           control = nls.control(maxiter = 1000))
+
+params <- coef(fit)
+
+# Step 5: Plot
+# Generate fitted values
+t_seq <- seq(1, 365, by = 1)
+fitted_curve <- rain.func(t_seq, params["R_0"], params["R_1"], params["omega"], params["theta"])
+
+# Plot using ggplot2
+ggplot() +
+  geom_point(data = data.frame(t_vals, rain_vals), aes(x = t_vals, y = rain_vals), color = "blue", size = 3) +
+  geom_line(data = data.frame(t_seq, fitted_curve), aes(x = t_seq, y = fitted_curve), color = "red", size = 1) +
+  labs(title = "Fitted Sinusoidal Model to Monthly Total Rainfall",
+       x = "Day of Year", y = "Monthly Total Rainfall (mm)") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = seq(0, 365, 30))
+
+# Calculate predicted values from the model
+predicted <- predict(fit)
+
+# Actual observed values
+observed <- rain_vals
+
+# R-squared calculation
+ss_res <- sum((observed - predicted)^2)
+ss_tot <- sum((observed - mean(observed))^2)
+r_squared <- 1 - (ss_res / ss_tot)
+
+cat("R-squared of the sinusoidal fit:", round(r_squared, 4), "\n")
+
+```
+```{r}
+# Use a natural spline (base R version)
+spline_fit <- smooth.spline(t_vals, rain_vals, df = 6)  # You can tune `df`
+
+# Predict and plot
+fitted_spline <- predict(spline_fit, x = t_seq)$y
+
+ggplot() +
+  geom_point(aes(x = t_vals, y = rain_vals), color = "blue", size = 3) +
+  geom_line(aes(x = t_seq, y = fitted_spline), color = "green", size = 1) +
+  labs(title = "Spline Fit to Monthly Rainfall",
+       x = "Day of Year", y = "Monthly Total Rainfall (mm)") +
+  theme_minimal()
+
+
+
+# Fit 2-term Fourier series to monthly total rainfall
+fourier_model <- lm(rain_vals ~ sin(2*pi*t_vals/365) + cos(2*pi*t_vals/365) +
+                               sin(4*pi*t_vals/365) + cos(4*pi*t_vals/365))
+
+# Extract coefficients
+coefs <- coef(fourier_model)
+
+# Function to evaluate the fit
+fourier_rain_func <- function(t) {
+  coefs[1] +
+    coefs[2]*sin(2*pi*t/365) + coefs[3]*cos(2*pi*t/365) +
+    coefs[4]*sin(4*pi*t/365) + coefs[5]*cos(4*pi*t/365)
+}
+
+
+# Generate predicted values
+t_seq <- seq(1, 365, 1)
+fourier_pred <- fourier_rain_func(t_seq)
+
+# Plot original vs fit
+ggplot() +
+  geom_point(aes(x = t_vals, y = rain_vals), color = "blue", size = 3) +
+  geom_line(aes(x = t_seq, y = fourier_pred), color = "darkorange", size = 1) +
+  labs(title = "2-Term Fourier Series Fit to Monthly Total Rainfall",
+       x = "Day of Year", y = "Monthly Total Rainfall (mm)") +
+  theme_minimal()
+
+```
+
+```{r}
+# Your simple sinusoidal function
+temp.func <- function(t, a, b1, b2) {
+  a + b1 * sin(2 * pi * t / 365) + b2 * cos(2 * pi * t / 365)
+}
+
+# Fit the model using nls()
+simple_fit <- nls(rain_vals ~ temp.func(t_vals, a, b1, b2),
+                  start = list(a = mean(rain_vals), b1 = 10, b2 = 10))
+
+# Extract fitted values
+predicted_simple <- predict(simple_fit)
+
+# Compute R-squared
+ss_res <- sum((rain_vals - predicted_simple)^2)
+ss_tot <- sum((rain_vals - mean(rain_vals))^2)
+r_squared_simple <- 1 - (ss_res / ss_tot)
+
+cat("R-squared (simple sinusoidal fit):", round(r_squared_simple, 4), "\n")
+
+
+# Create time sequence and predict full year
+t_seq <- seq(1, 365, by = 1)
+pred_curve <- temp.func(t_seq,
+                        coef(simple_fit)["a"],
+                        coef(simple_fit)["b1"],
+                        coef(simple_fit)["b2"])
+
+# Plot original monthly total rainfall points + fit curve
+library(ggplot2)
+
+ggplot() +
+  geom_point(aes(x = t_vals, y = rain_vals), color = "blue", size = 3) +
+  geom_line(aes(x = t_seq, y = pred_curve), color = "red", size = 1) +
+  labs(title = paste("Simple Sinusoidal Fit to Monthly Total Rainfall (R² =",
+                     round(r_squared_simple, 4), ")"),
+       x = "Day of Year", y = "Monthly Total Rainfall (mm)") +
+  theme_minimal()
+
+
+coef(simple_fit)["a"]
+coef(simple_fit)["b1"]
+coef(simple_fit)["b2"]
+
+```
+
+
+
