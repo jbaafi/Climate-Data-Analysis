@@ -18,6 +18,9 @@ The workflow includes:
 - Rainfall and temperature trend analysis with annotated plots
 - Modular R scripts for reproducibility
 
+## 📊 Example Output
+![Temperature Fit Plot](figures/temp_func_fit.png)
+
 ## Repository Structure
 
 ```r
