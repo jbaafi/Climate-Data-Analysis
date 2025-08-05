@@ -19,7 +19,7 @@ The workflow includes:
 - Modular R scripts for reproducibility
 
 ## 📊 Example Output
-![Temperature Fit Plot](figures/temp_func_fit.png)
+![Temperature Fit Plot](figures/temperature_func_fit.png)
 
 ## Repository Structure
 
